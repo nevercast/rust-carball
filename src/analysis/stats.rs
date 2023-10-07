@@ -5,7 +5,7 @@ use log::warn;
 use polars::error::PolarsError;
 use polars::prelude::{
     BooleanChunked, ChunkAgg, ChunkApply, ChunkCast, ChunkCompare, ChunkFilter, DataFrame,
-    UInt32Type,
+    DataType,
 };
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
@@ -108,7 +108,7 @@ impl PlayerStats {
         let boost_pickup = player_df
             .column("boost_pickup")?
             .u8()?
-            .cast::<UInt32Type>()?;
+            .cast(&DataType::UInt32)?;
 
         let boost_amount = player_df.column("boost_amount")?.f32()?;
         let game_delta = game_df.column("delta")?.f32()?;
@@ -158,10 +158,10 @@ impl PlayerStats {
         }
 
         Ok(Self {
-            big_pads_collected: boost_pickup.eq(2).sum().unwrap(),
-            small_pads_collected: boost_pickup.eq(1).sum().unwrap(),
+            big_pads_collected: boost_pickup.equal(2).sum().unwrap(),
+            small_pads_collected: boost_pickup.equal(1).sum().unwrap(),
             boost_used: game_delta
-                .filter(&player_df.column("boost_is_active")?.u8()?.eq(1))?
+                .filter(&player_df.column("boost_is_active")?.u8()?.equal(1))?
                 .sum()
                 .unwrap()
                 * BOOST_PER_SECOND,
